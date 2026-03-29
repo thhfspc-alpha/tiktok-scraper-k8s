@@ -1,4 +1,4 @@
-name: TikTok Parallel Scraper
+name: TikTok 7-Node Parallel Scraper to Mega
 
 on:
   push:
@@ -9,9 +9,9 @@ jobs:
   scrape:
     runs-on: ubuntu-latest
     strategy:
-      # Yeh line 3 parallel runners (nodes) create karegi
       matrix:
-        node_index: [0, 1, 2]
+        # 7 Nodes parallel chalenge
+        node_index: [0, 1, 2, 3, 4, 5, 6]
     
     steps:
       - name: Checkout code
@@ -28,11 +28,20 @@ jobs:
       - name: Run Scraper
         env:
           NODE_ID: ${{ matrix.node_index }}
-          TOTAL_NODES: 3
+          TOTAL_NODES: 7
         run: python scraper.py
 
-      - name: Upload Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: tiktok-data-node-${{ matrix.node_index }}
-          path: tiktok_data/
+      - name: Install Rclone
+        run: sudo apt-get install rclone -y
+
+      - name: Upload to Mega (vfx)
+        env:
+          RCLONE_CONF: ${{ secrets.RCLONE_CONF_DATA }}
+        run: |
+          # 1. Rclone config file create karna
+          mkdir -p ~/.config/rclone
+          echo "$RCLONE_CONF" > ~/.config/rclone/rclone.conf
+          
+          # 2. Data copy karna Mega par [vfx remote use karte hue]
+          # Har node ka data alag folder mein jayega
+          rclone copy tiktok_data/ vfx:tiktok_backups/node-${{ matrix.node_index }}
