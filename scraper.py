@@ -244,21 +244,29 @@ class TikTokScraperV4:
         await self.client.aclose()
 
 # ---------------------------------------------------------
-# 4. Execution Logic
+# 4. Execution Logic (Modified for Parallel Nodes)
 # ---------------------------------------------------------
 async def main():
+    # Environment variables se node ki info uthayen
+    node_id = int(os.getenv("NODE_ID", 0))
+    total_nodes = int(os.getenv("TOTAL_NODES", 1))
+
     if not os.path.exists("links.txt"):
         print("Error: links.txt not found")
         return
 
     with open("links.txt", "r", encoding="utf-8") as f:
-        URLS = [line.strip() for line in f if line.strip()]
+        all_urls = [line.strip() for line in f if line.strip()]
+
+    # Formula: Har node sirf apne hisse ke links pick karega
+    # URL_index % total_nodes == node_id
+    URLS = [url for i, url in enumerate(all_urls) if i % total_nodes == node_id]
 
     if not URLS:
-        print("Error: links.txt is empty")
+        print(f"Node {node_id}: No links assigned.")
         return
 
-    print(f"Found {len(URLS)} URLs. Starting...")
+    print(f"Node {node_id} handling {len(URLS)} links.")
 
     scraper = TikTokScraperV4(CONFIG)
     try:
