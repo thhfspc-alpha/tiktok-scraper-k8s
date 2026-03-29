@@ -1,0 +1,38 @@
+name: TikTok Parallel Scraper
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    strategy:
+      # Yeh line 3 parallel runners (nodes) create karegi
+      matrix:
+        node_index: [0, 1, 2]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install httpx loguru
+
+      - name: Run Scraper
+        env:
+          NODE_ID: ${{ matrix.node_index }}
+          TOTAL_NODES: 3
+        run: python scraper.py
+
+      - name: Upload Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: tiktok-data-node-${{ matrix.node_index }}
+          path: tiktok_data/
